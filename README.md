@@ -1,4 +1,4 @@
-#Sample pipeline template for Azure DevOps
+# Sample pipeline template for Azure DevOps
 
 Sample pipeline template to be used with Azure DevOps to trigger an automated container build and a rolling update for applications managed by gopaddle. 
 
@@ -8,22 +8,8 @@ Sample pipeline template to be used with Azure DevOps to trigger an automated co
  ## Pre-requisite
 
 As a pre-requisite, an application must be deployed in gopaddle. Below flow chart gives the step by step process to be followed before creating a Azure DevOps pipeline.
-```flow
-st=>start: Subscribe to gopaddle:>http://portal.gopaddle.io/signUp/[blank]
-e=>end: Build Azure DevOps Pipeline:>https://azure.microsoft.com/en-us/services/devops/
-k8s=>operation: Provision K8s in gopaddle:>https://help.gopaddle.io/en/articles/3942973-registering-a-cloud-account
-registry=>operation: Add Container Registry in gopaddle:>https://help.gopaddle.io/en/articles/3942974-adding-a-docker-registry
-install=>operation: Download and install gpctl:>https://help.gopaddle.io/en/articles/5116592-installing-and-configuring-gopaddle-command-line-utility
-clone=>operation: Clone project locally
-init=>operation: initialize project:>https://help.gopaddle.io/en/articles/5056807-initializing-a-microservice-from-scratch
-io=>inputoutput: Gather .gp file with resource IDs
-launch=>condition: App Launched
 
-st->k8s(right)->registry->clone->install(right)->init
-init(bottom)->launch(yes)->io
-launch(no)->init
-io->e
-```
+![](https://gopaddle-marketing.s3.ap-southeast-2.amazonaws.com/azure-devops-pipeline-prerequisite.png)
 
 Since we are building a pipeline for an application deployed in gopaddle, we must first initialize and deploy an application in gopaddle before we move on to creating the pipeline in Azure DevOps.
 
@@ -33,8 +19,8 @@ Since we are building a pipeline for an application deployed in gopaddle, we mus
 + Clone the project locally - Clone the GitHub project to be containerized. 
 + Initialize and deploy the project using gopaddle
     + [Download and install gpctl](https://help.gopaddle.io/en/articles/5116592-installing-and-configuring-gopaddle-command-line-utility) - Now, from your local desktop, download and install gpctl command line utility.
-  + [Perform gpctl init](https://help.gopaddle.io/en/articles/5056807-initializing-a-microservice-from-scratch) - Auto-generate the Dockerfile and Kubernetes YAML, build docker images, and deploy the application.
-  + capture the .gp file with the resource IDs - Once the application is onboarded using gopaddle, gpctl init creates a .gp file in the project folder which contains the ***apiToken***, ***containerID***, ***serviceID***, ***applicationID***, ***projectID***, ***releaseID*** and the ***distributionID***. Make a note of these IDs, as we will be using these in the Azure DevOps pipeline script.
+	+ [Perform gpctl init](https://help.gopaddle.io/en/articles/5056807-initializing-a-microservice-from-scratch) - Auto-generate the Dockerfile and Kubernetes YAML, build docker images, and deploy the application.
+	+ capture the .gp file with the resource IDs - Once the application is onboarded using gopaddle, gpctl init creates a .gp file in the project folder which contains the ***apiToken***, ***containerID***, ***serviceID***, ***applicationID***, ***projectID***, ***releaseID*** and the ***distributionID***. Make a note of these IDs, as we will be using these in the Azure DevOps pipeline script.
 
  
 
@@ -49,6 +35,7 @@ Create a pipeline in Azure DevOps.
   2. Select the starter pipeline config
   
   ![](https://gopaddle-marketing.s3.ap-southeast-2.amazonaws.com/azure-starter-pipeline.png)
+  
   3. Grant the permission for branches to allow the access to the GitHub reposiory
   4. Once the pipeline is created, Azure DevOps creates a ***azure-pipelines.yml*** file in the project root folder in GitHub repository. Replace this default template with the contents from the ***azure-pipelines.yml*** from this sample template.
   5. Edit the contents of the ***azure-pipelines.yml*** file and replace the IDs with the IDs gathered during the gpctl init process.
@@ -84,29 +71,38 @@ Defines the different stages of the DevOps pipeline. The template has two steps:
 
   + **Step-1:** Leverages gopaddle APIs to initiate the Container build within gopaddle as soon as the code is committed. Below is the API request that is used to initiate a build in gopaddle.
 
-  API:  https://$endPoint/gateway/v1/$(projectID)/build
-  Method: POST
-  Payload:
+  **API**:  https://$endPoint/gateway/v1/$(projectID)/build
+  
+  **Method**: POST
+  
+  **Payload**: 
+  
   ```json
-    {
+{
    "serviceID":"$(containerID)",
    "releaseID":"$(releaseID)",
    "distributionID":"$(distributionID)"
-  }```
- Once the build is triggered, the pipeline script polls for the build status and waits until the build completes. Below is the API call to get the build information based on build ID.
+}
+```
 
- API: https://$endPoint/gateway/v1/$(projectID)/build/$buildid
- Method: GET
+  Once the build is triggered, the pipeline script polls for the build status and waits until the build completes. Below is the API call to get the build information based on build ID.
+  
+  **API**: https://$endPoint/gateway/v1/$(projectID)/build/$buildid
+  
+  **Method**: GET
  
- ![](https://gopaddle-marketing.s3.ap-southeast-2.amazonaws.com/azure-pipelinerun.png)
+  ![](https://gopaddle-marketing.s3.ap-southeast-2.amazonaws.com/azure-pipelinerun.png)
  
   + **Step-2 :** Leverages gopaddle APIs to update the application managed by gopaddle. Below is the API request that is used to initiate a build in gopaddle.
   
-  API: https://$endPoint/gateway/v1/$(projectID)/application/$(applicationID)
-  Method: PUT
-  Payload: 
+  **API**: https://$endPoint/gateway/v1/$(projectID)/application/$(applicationID)
+  
+  **Method**: PUT
+  
+  **Payload**: 
+  
   ```json
-    {
+	  {
    "serviceGroups":[
       {
          "services":[
@@ -132,16 +128,7 @@ Defines the different stages of the DevOps pipeline. The template has two steps:
 
 ## Sequence of pipeline steps
 
-```seq
-git->Pipeline: Commit 
-Note right of Pipeline: Triggers build
-Pipeline->gopaddle: Build
-Note right of gopaddle: Build Container Image
-gopaddle-->Pipeline: Build Status
-Note right of Pipeline: Wait until build completes
-Pipeline->gopaddle: Update App (container, service, app ID. commit desc)
-gopaddle->App: Rolling Update
-```
+![](https://gopaddle-marketing.s3.ap-southeast-2.amazonaws.com/azure-devops-pipeline-sequence.png)
 
 ## Maintainers
 This sample template is maintained by the <img src="https://i0.wp.com/blog.gopaddle.io/wp-content/uploads/2020/08/cropped-gopaddle.png?fit=512%2C512&ssl=1" width="17" height="17"> [gopaddle.io](https://gopaddle.io) team.
