@@ -1,9 +1,8 @@
+![](https://img.shields.io/github/downloads/gopaddle-io/azure-devops-pipeline/total) ![](https://img.shields.io/github/issues/gopaddle-io/azure-devops-pipeline) ![](https://img.shields.io/twitter/follow/gopaddleio?style=flat-square)
+
 # Sample pipeline template for Azure DevOps
 
 Sample pipeline template to be used with Azure DevOps to trigger an automated container build and a rolling update for applications managed by gopaddle. 
-
-
-![](https://img.shields.io/github/downloads/gopaddle-io/azure-devops-pipeline/total) ![](https://img.shields.io/github/issues/gopaddle-io/azure-devops-pipeline) ![](https://img.shields.io/twitter/follow/gopaddleio?style=flat-square)
 
  ## Pre-requisite
 
