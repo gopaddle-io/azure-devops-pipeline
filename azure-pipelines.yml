@@ -11,19 +11,28 @@ pool:
   vmImage: ubuntu-latest
   
 variables:
-  apiToken: <api_token>
-  containerID: <container_id>
-  serviceID: <service_id>
-  applicationID: <application_id> 
-  projectID: <project_id>
-  releaseID: <release_id>
-  distributionID: <distribution_id>
-  endPoint: <gopaddle_endpoint>
+- group: gp-api-key
+- name:  containerID
+  value: <container_id>
+- name:  serviceID
+  value: <service_id>
+- name:  applicationID
+  value: <application_id> 
+- name:  projectID
+  value: <project_id>
+- name:  releaseID
+  value: <release_id>
+- name:  distributionID
+  value: <distribution_id>
+- name:  endPoint
+  value: <gopaddle_endpoint>
+
+
 
 steps:
 - script: |
     # Trigger the build as soon as the code is committed
-    curl -H 'Authorization: Bearer $(apiToken)' -X POST -d '{"serviceID":"$(containerID)","releaseID":"$(releaseID)","distributionID":"$(distributionID)"}' https://$endPoint/gateway/v1/$(projectID)/build > buildInfo.json
+    curl -H 'Authorization: Bearer $(GP_API_TOKEN)' -X POST -d '{"serviceID":"$(containerID)","releaseID":"$(releaseID)","distributionID":"$(distributionID)"}' https://$(endPoint)/gateway/v1/$(projectID)/build > buildInfo.json
     
     # Get build ID and commit message from the build information
     buildID="$(cat buildInfo.json | jq -r '.buildID')"
@@ -32,11 +41,11 @@ steps:
     commitMessage=`echo "$(Build.SourceVersionMessage)" | base64`
     
     # Wait until build is complete
-    for (( ; ; ));do   curl -H 'Authorization: Bearer $(apiToken)' https://$endPoint/gateway/v1/$(projectID)/build/$buildID > buildStatusInfo.json;   buildStatus="$(cat buildStatusInfo.json | jq -r '.status')";    echo "$buildStatus";   if [[ $buildStatus == "Failed" ]];   then     echo "build failed";     break;   elif [[ $buildStatus == "Created" ]];   then     echo "build Created successfully";          break;   elif [[ $buildStatus == "Creating" ]];   then     if [[ $buildInProgress == true ]];     then       echo "build creating...";       buildInProgress=false;     fi;     continue;   else     echo "unknown status build dropped";     break;   fi; done
+    for (( ; ; ));do   curl -H 'Authorization: Bearer $(GP_API_TOKEN)' https://$(endPoint)/gateway/v1/$(projectID)/build/$buildID > buildStatusInfo.json;   buildStatus="$(cat buildStatusInfo.json | jq -r '.status')";    echo "$buildStatus";   if [[ $buildStatus == "Failed" ]];   then     echo "build failed";     break;   elif [[ $buildStatus == "Created" ]];   then     echo "build Created successfully";          break;   elif [[ $buildStatus == "Creating" ]];   then     if [[ $buildInProgress == true ]];     then       echo "build creating...";       buildInProgress=false;     fi;     continue;   else     echo "unknown status build dropped";     break;   fi; done
   displayName: 'Triggering Build'
   
 - script: |
     # Trigger Rolling Update
-    if [[ $buildStatus == "Created" ]];   then curl -H 'Authorization: Bearer $(apiToken)' -X PUT -d '{"serviceGroups":[{"services":[{"id":"$(containerID)","serviceVersion":"draft","releaseConfig":{"buildID":"'"$buildID"'","version":"'"$buildVersion"'"}}],"id":"$(serviceID)","name":"eshoponweb","version":"draft","description":"'"$commitMessage"'"}],"deploymentTemplateVersion":"draft","updateType":"buildUpdate"}' https://$endPoint/gateway/v1/$(projectID)/application/$(applicationID) > rollingupdateinfo.json;     rollingUpdateMessage="$(cat rollingupdateinfo.json | jq -r '.message')";     echo "$rollingUpdateMessage"; fi;
+    if [[ $buildStatus == "Created" ]];   then curl -H 'Authorization: Bearer $(GP_API_TOKEN)' -X PUT -d '{"serviceGroups":[{"services":[{"id":"$(containerID)","serviceVersion":"draft","releaseConfig":{"buildID":"'"$buildID"'","version":"'"$buildVersion"'"}}],"id":"$(serviceID)","name":"eshoponweb","version":"draft","description":"'"$commitMessage"'"}],"deploymentTemplateVersion":"draft","updateType":"buildUpdate"}' https://$(endPoint)/gateway/v1/$(projectID)/application/$(applicationID) > rollingupdateinfo.json;     rollingUpdateMessage="$(cat rollingupdateinfo.json | jq -r '.message')";     echo "$rollingUpdateMessage"; fi;
     echo '{"serviceGroups":[{"services":[{"id":"$(containerID)","serviceVersion":"draft","releaseConfig":{"buildID":"'"$buildID"'","version":"'"$buildVersion"'"}}],"id":"$(serviceID)","name":"eshoponweb","version":"draft","description":"'"$commitMessage"'"}],"deploymentTemplateVersion":"draft","updateType":"buildUpdate"}'
   displayName: 'Creating Rolling Update'
