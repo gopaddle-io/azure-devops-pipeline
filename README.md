@@ -37,7 +37,11 @@ Create a pipeline in Azure DevOps.
   
   3. Grant the permission for branches to allow the access to the GitHub reposiory
   4. Once the pipeline is created, Azure DevOps creates a ***azure-pipelines.yml*** file in the project root folder in GitHub repository. Replace this default template with the contents from the ***azure-pipelines.yml*** from this sample template.
-  5. Edit the contents of the ***azure-pipelines.yml*** file and replace the IDs with the IDs gathered during the gpctl init process.
+  5. Create secure variable to access the gopaddle API token by creating a varaible group by name ***gp-api-key*** under the ***Library*** option in Azure DevOps portal. Store the gopaddle API token under this group with the variable key as ***GP_API_TOKEN*** and the value as the API token from the gpctl init output.
+  
+  ![](https://gopaddle-marketing.s3.ap-southeast-2.amazonaws.com/azure-pipeline-secrets.png)
+  
+  6. Edit the contents of the ***azure-pipelines.yml*** file and replace the IDs with the IDs gathered during the gpctl init process.
 
  ## Pipeline Script explained
  
@@ -55,7 +59,7 @@ The set of variables used by the pipeline. The values of these variables are der
 
 | Variable  | Purpose |
 | ------------- | ------------- |
-| apiToken  | API token to access the gopaddle account  |
+| gp-api-token  | Variable group under Azure DevOps pipeline where the gopaddle API token is stored  |
 | containerID  | Container ID of the project onboarded in gopaddle  |
 | serviceID  | Service ID under which the container is added  |
 | applicationID  |  ID of the application launched in gopaddle  |
